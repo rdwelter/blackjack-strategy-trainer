@@ -2,7 +2,7 @@
 
 import Hand from './components/hand';
 import Controls from './components/controls';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const getCardValue = {
 	0: 11,
@@ -43,6 +43,7 @@ export default function Page() {
 	const [dealerCards, setDealerCards] = useState([0, 1]);
 	const [playerCards, setPlayerCards] = useState([2, 3]);
 	const [gamePhase, setGamePhase] = useState('START');
+	const intervalRef = useRef();
 
 	function dealNewHand() {
 		let newHand = [];
@@ -61,24 +62,51 @@ export default function Page() {
 	}
 
 	function playerHit() {
-		if (getHandValue(playerCards) < 21) {
+		if (gamePhase === 'Player' && getHandValue(playerCards) < 21) {
 			let newHand = [...playerCards];
 			let newCard = generateNewCard();
 			while (newHand.includes(newCard) || dealerCards.includes(newCard)) {
 				newCard = generateNewCard();
 			}
 			newHand.push(newCard);
-			console.log(getHandValue(newHand));
+			// console.log(getHandValue(newHand));
 			setPlayerCards(newHand);
-			setGamePhase(getHandValue(newHand) < 21 ? 'Player' : 'Dealer');
+			const newHandValue = getHandValue(newHand);
+			if (newHandValue === 21) {
+				playerStand();
+			}
+			else {
+				setGamePhase(newHandValue < 21 ? 'Player' : 'Dealer');
+			}
 		}
+	}
+
+	function playerStand() {
+		setGamePhase('Dealer');
+
+		intervalRef.current = setInterval(() => {
+			setDealerCards(currCards => {
+				if (getHandValue(currCards) > 16) {
+					clearInterval(intervalRef.current);
+					return currCards;
+				}
+				else {
+					let newCard = generateNewCard();
+					while (currCards.includes(newCard) || playerCards.includes(newCard)) {
+						newCard = generateNewCard();
+					}
+					const newCards = [...currCards, newCard];
+					return newCards;
+				}
+			})
+		}, 700);
 	}
 
 	return (
 		<div id='container' className='bg-[#487860] h-screen'>
 			<Hand currHand={dealerCards} isDealer={true} gamePhase={gamePhase} />
 			<Hand currHand={playerCards} isDealer={false} gamePhase={gamePhase} />
-			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} />
+			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} />
 		</div>
 	);
 }
