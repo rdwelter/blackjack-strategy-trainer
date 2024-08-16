@@ -46,19 +46,23 @@ export default function Page() {
 	const intervalRef = useRef();
 
 	function dealNewHand() {
-		let newHand = [];
-		while (newHand.length < 4) {
-			let newCard = generateNewCard();
-			while (newHand.includes(newCard)) {
-				newCard = generateNewCard();
+		let dealerHand = [];
+		let playerHand = [];
+		do {
+			let newHand = [];
+			while (newHand.length < 4) {
+				let newCard = generateNewCard();
+				while (newHand.includes(newCard)) {
+					newCard = generateNewCard();
+				}
+				newHand.push(newCard);
 			}
-			newHand.push(newCard);
-		}
-		const dealerHand = newHand.slice(0, 2);
-		const playerHand = newHand.slice(2, 4);
+			dealerHand = newHand.slice(0, 2);
+			playerHand = newHand.slice(2, 4);
+		} while (getHandValue(dealerHand) === 21 || getHandValue(playerHand) === 21);
 		setDealerCards(dealerHand);
 		setPlayerCards(playerHand);
-		setGamePhase(getHandValue(playerHand) < 21 ? 'Player' : 'Dealer');
+		setGamePhase('Player');
 	}
 
 	function playerHit() {
@@ -102,11 +106,16 @@ export default function Page() {
 		}, 700);
 	}
 
+	function playerDouble() {
+		playerHit();
+		playerStand();
+	}
+
 	return (
 		<div id='container' className='bg-[#487860] h-screen'>
 			<Hand currHand={dealerCards} isDealer={true} gamePhase={gamePhase} />
 			<Hand currHand={playerCards} isDealer={false} gamePhase={gamePhase} />
-			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} />
+			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} />
 		</div>
 	);
 }
