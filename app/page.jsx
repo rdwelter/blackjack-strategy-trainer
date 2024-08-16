@@ -41,13 +41,20 @@ const generateNewCard = () => Math.floor(Math.random() * 52);
 
 export default function Page() {
 	const [dealerCards, setDealerCards] = useState([0, 1]);
-	const [playerCards, setPlayerCards] = useState([2, 3]);
+	const [playerCards, setPlayerCards] = useState([[2, 3]]);
 	const [gamePhase, setGamePhase] = useState('START');
 	const intervalRef = useRef();
 
+	const playerHands = playerCards.map((currHand, ind) =>
+		<li key={'' + ind} className='flex-1 p-[10px]'>
+			<Hand currHand={currHand} isDealer={false} gamePhase={gamePhase} />
+		</li>
+	);
+
 	function dealNewHand() {
+		clearInterval(intervalRef.current);
 		let dealerHand = [];
-		let playerHand = [];
+		let playerHand = [[]];
 		do {
 			let newHand = [];
 			while (newHand.length < 4) {
@@ -58,24 +65,24 @@ export default function Page() {
 				newHand.push(newCard);
 			}
 			dealerHand = newHand.slice(0, 2);
-			playerHand = newHand.slice(2, 4);
-		} while (getHandValue(dealerHand) === 21 || getHandValue(playerHand) === 21);
+			playerHand[0] = newHand.slice(2, 4);
+		} while (getHandValue(dealerHand) === 21 || getHandValue(playerHand[0]) === 21);
 		setDealerCards(dealerHand);
 		setPlayerCards(playerHand);
 		setGamePhase('Player');
 	}
 
 	function playerHit() {
-		if (gamePhase === 'Player' && getHandValue(playerCards) < 21) {
+		if (gamePhase === 'Player' && getHandValue(playerCards[0]) < 21) {
 			let newHand = [...playerCards];
 			let newCard = generateNewCard();
-			while (newHand.includes(newCard) || dealerCards.includes(newCard)) {
+			while (newHand[0].includes(newCard) || dealerCards.includes(newCard)) {
 				newCard = generateNewCard();
 			}
-			newHand.push(newCard);
+			newHand[0].push(newCard);
 			// console.log(getHandValue(newHand));
 			setPlayerCards(newHand);
-			const newHandValue = getHandValue(newHand);
+			const newHandValue = getHandValue(newHand[0]);
 			if (newHandValue === 21) {
 				playerStand();
 			}
@@ -96,7 +103,7 @@ export default function Page() {
 				}
 				else {
 					let newCard = generateNewCard();
-					while (currCards.includes(newCard) || playerCards.includes(newCard)) {
+					while (currCards.includes(newCard) || playerCards[0].includes(newCard)) {
 						newCard = generateNewCard();
 					}
 					const newCards = [...currCards, newCard];
@@ -107,14 +114,16 @@ export default function Page() {
 	}
 
 	function playerDouble() {
-		playerHit();
-		playerStand();
+		if (playerCards[0].length === 2) {
+			playerHit();
+			playerStand();
+		}
 	}
 
 	return (
 		<div id='container' className='bg-[#487860] h-screen'>
 			<Hand currHand={dealerCards} isDealer={true} gamePhase={gamePhase} />
-			<Hand currHand={playerCards} isDealer={false} gamePhase={gamePhase} />
+			<ul className='flex justify-center w-screen'>{playerHands}</ul>
 			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} />
 		</div>
 	);
