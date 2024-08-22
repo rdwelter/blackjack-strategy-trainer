@@ -57,24 +57,26 @@ export default function Page() {
 	);
 
 	function dealNewHand() {
-		clearInterval(intervalRef.current);
-		let dealerHand = [];
-		let playerHand = [[]];
-		do {
-			let newHand = [];
-			while (newHand.length < 4) {
-				let newCard = generateNewCard();
-				while (newHand.includes(newCard)) {
-					newCard = generateNewCard();
+		if (gamePhase === 'START' || gamePhase === 'END') {
+			clearInterval(intervalRef.current);
+			let dealerHand = [];
+			let playerHand = [[]];
+			do {
+				let newHand = [];
+				while (newHand.length < 4) {
+					let newCard = generateNewCard();
+					while (newHand.includes(newCard)) {
+						newCard = generateNewCard();
+					}
+					newHand.push(newCard);
 				}
-				newHand.push(newCard);
-			}
-			dealerHand = newHand.slice(0, 2);
-			playerHand[0] = newHand.slice(2, 4);
-		} while (getHandValue(dealerHand) === 21 || getHandValue(playerHand[0]) === 21);
-		setDealerCards(dealerHand);
-		setPlayerCards(playerHand);
-		setGamePhase('Player');
+				dealerHand = newHand.slice(0, 2);
+				playerHand[0] = newHand.slice(2, 4);
+			} while (getHandValue(dealerHand) === 21 || getHandValue(playerHand[0]) === 21);
+			setDealerCards(dealerHand);
+			setPlayerCards(playerHand);
+			setGamePhase('Player');
+		}
 	}
 
 	function playerHit() {
@@ -103,6 +105,7 @@ export default function Page() {
 			intervalRef.current = setInterval(() => {
 				setDealerCards(currCards => {
 					if (getHandValue(currCards) > 16 && !isSoft17(currCards)) {
+						setGamePhase('END');
 						clearInterval(intervalRef.current);
 						return currCards;
 					}
