@@ -37,6 +37,11 @@ const getHandValue = (thisHand) => {
 	return sum;
 }
 
+const isSoft17 = (thisHand) => {
+	let newHand = [...thisHand, 9];
+	return getHandValue(newHand) === 17;
+}
+
 const generateNewCard = () => Math.floor(Math.random() * 52);
 
 export default function Page() {
@@ -93,24 +98,25 @@ export default function Page() {
 	}
 
 	function playerStand() {
-		setGamePhase('Dealer');
-
-		intervalRef.current = setInterval(() => {
-			setDealerCards(currCards => {
-				if (getHandValue(currCards) > 16) {
-					clearInterval(intervalRef.current);
-					return currCards;
-				}
-				else {
-					let newCard = generateNewCard();
-					while (currCards.includes(newCard) || playerCards[0].includes(newCard)) {
-						newCard = generateNewCard();
+		if (gamePhase === 'Player') {
+			setGamePhase('Dealer');
+			intervalRef.current = setInterval(() => {
+				setDealerCards(currCards => {
+					if (getHandValue(currCards) > 16 && !isSoft17(currCards)) {
+						clearInterval(intervalRef.current);
+						return currCards;
 					}
-					const newCards = [...currCards, newCard];
-					return newCards;
-				}
-			})
-		}, 700);
+					else {
+						let newCard = generateNewCard();
+						while (currCards.includes(newCard) || playerCards[0].includes(newCard)) {
+							newCard = generateNewCard();
+						}
+						const newCards = [...currCards, newCard];
+						return newCards;
+					}
+				})
+			}, 700);
+		}
 	}
 
 	function playerDouble() {
