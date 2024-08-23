@@ -48,11 +48,12 @@ export default function Page() {
 	const [dealerCards, setDealerCards] = useState([0, 1]);
 	const [playerCards, setPlayerCards] = useState([[2, 3]]);
 	const [gamePhase, setGamePhase] = useState('START');
+	const [currentHand, setCurrentHand] = useState(0);
 	const intervalRef = useRef();
 
 	const playerHands = playerCards.map((currHand, ind) =>
 		<li key={'' + ind} className='flex-1 p-[10px]'>
-			<Hand currHand={currHand} isDealer={false} gamePhase={gamePhase} />
+			<Hand currHand={currHand} isDealer={false} displayIndicator={gamePhase === 'Player' && currentHand === ind} gamePhase={gamePhase} />
 		</li>
 	);
 
@@ -94,7 +95,7 @@ export default function Page() {
 				playerStand();
 			}
 			else {
-				setGamePhase(newHandValue < 21 ? 'Player' : 'Dealer');
+				setGamePhase(newHandValue < 21 ? 'Player' : 'END');
 			}
 		}
 	}
@@ -129,9 +130,15 @@ export default function Page() {
 		}
 	}
 
+	function playerSplit() {
+		if (gamePhase === 'Player') {
+			;
+		}
+	}
+
 	return (
 		<div id='container' className='bg-[#487860] h-screen'>
-			<Hand currHand={dealerCards} isDealer={true} gamePhase={gamePhase} />
+			<Hand currHand={dealerCards} isDealer={true} displayIndicator={false} gamePhase={gamePhase} />
 			<ul className='flex justify-center w-screen'>{playerHands}</ul>
 			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} />
 		</div>
