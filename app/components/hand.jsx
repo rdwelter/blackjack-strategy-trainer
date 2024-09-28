@@ -10,7 +10,7 @@ export default function Hand({ currHand, isDealer, displayIndicator, gamePhase }
     return (
         <div className='justify-center align-center'>
             <ul className='flex justify-center align-center p-2'>{currCards}</ul>
-            <p className='flex justify-center text-2xl text-[#ff00ff]'><b>{displayIndicator ? '^' : ''}</b></p>
+            <p className='flex justify-center text-4xl text-[#ffff00]'><b>{displayIndicator ? '^' : ''}</b></p>
         </div>
     );
 }
