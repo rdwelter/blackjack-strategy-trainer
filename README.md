@@ -1,6 +1,7 @@
 # blackjack-strategy-trainer
 
 Version 0.1
+
 A web app to stop me from losing all my money
 
 Current features:
