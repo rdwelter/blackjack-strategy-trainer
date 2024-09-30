@@ -37,7 +37,7 @@ const getHandValue = (thisHand) => {
 		sum -= 10;
 		numAces -= 1;
 	}
-	// console.log(sum);
+	console.log(sum);
 	return sum;
 }
 
@@ -57,23 +57,30 @@ const isSoft17 = (thisHand) => {
 	return false;
 }
 
+const isPair = (thisHand) => {
+	if (thisHand.length === 2) {
+		return thisHand[0] % 13 === thisHand[1] % 13;
+	}
+	return false;
+}
+
 export default function Page() {
 	const shoeRef = useRef(new Shoe(2));
 	const [dealerCards, setDealerCards] = useState([0, 1]);
 	const [playerCards, setPlayerCards] = useState([[2, 3]]);
 	const [gamePhase, setGamePhase] = useState('START');
-	const [currentHand, setCurrentHand] = useState(0);
+	const [currHandNum, setCurrHandNum] = useState(0);
+	const numHandsRef = useRef(1);
 	const intervalRef = useRef();
 	const doubleRef = useRef(false);
 	const dealerFinishedRef = useRef(false);
 	const dealerDrawnCardRef = useRef(null);
 
 	const dealCard = useCallback(() => shoeRef.current.dealCard(), []);
-	// const replaceCard = useCallback((card) => shoeRef.current.replaceCard(card), []);
 
 	const playerHands = playerCards.map((currHand, ind) =>
 		<li key={'' + ind} className='flex-1 p-[10px]'>
-			<Hand currHand={currHand} isDealer={false} displayIndicator={gamePhase === 'Player' && currentHand === ind} gamePhase={gamePhase} />
+			<Hand currHand={currHand} isDealer={false} displayIndicator={gamePhase === 'Player' && currHandNum === ind} gamePhase={gamePhase} />
 		</li>
 	);
 
@@ -81,13 +88,14 @@ export default function Page() {
 		if (gamePhase === 'START' || gamePhase === 'END') {
 			clearInterval(intervalRef.current);
 			doubleRef.current = false;
+			numHandsRef.current = 1;
 			shoeRef.current.shuffle();
 			const newDealerCards = [dealCard(), dealCard()];
 			const newPlayerCards = [[dealCard(), dealCard()]];
+			setCurrHandNum(0);
 			setDealerCards(newDealerCards);
 			setPlayerCards(newPlayerCards);
 			setGamePhase('Player');
-			setCurrentHand(0);
 		}
 	}
 
@@ -96,15 +104,7 @@ export default function Page() {
 			const newCard = dealCard();
 			setPlayerCards(currCards => {
 				const newCards = [...currCards];
-				newCards[currentHand] = [...newCards[currentHand], newCard];
-				// console.log("Getting hand value from hit function");
-				let handValue = getHandValue(newCards[currentHand]);
-				if (handValue === 21) {
-					setTimeout(playerStand, 0);
-				}
-				else if (handValue > 21) {
-					setTimeout(() => setGamePhase('END'), 0);
-				}
+				newCards[currHandNum] = [...newCards[currHandNum], newCard];
 				return newCards;
 			});
 		}
@@ -112,11 +112,19 @@ export default function Page() {
 
 	function playerStand() {
 		if (gamePhase === 'Player') {
+			setCurrHandNum(num => num + 1);
+			if (currHandNum + 1 === numHandsRef.current) {
+				dealerPhase();
+			}
+		}
+	}
+
+	function dealerPhase() {
+		if (gamePhase === 'Player') {
 			setGamePhase('Dealer');
 			const dealerPlayInt = setInterval(() => {
 				dealerDrawnCardRef.current = dealCard();
 				setDealerCards(currCards => {
-					// console.log("Getting hand value from stand function");
 					if (getHandValue(currCards) > 16 && !isSoft17(currCards)) {
 						setGamePhase('END');
 						clearInterval(dealerPlayInt);
@@ -134,29 +142,16 @@ export default function Page() {
 	}
 
 	function playerDouble() {
-		if (gamePhase === 'Player' && playerCards[currentHand].length === 2) {
+		if (gamePhase === 'Player' && playerCards[currHandNum].length === 2) {
 			const newCard = dealCard();
 			setPlayerCards(currCards => {
 				const newCards = [...currCards];
-				newCards[currentHand] = [...newCards[currentHand], newCard];
+				newCards[currHandNum] = [...newCards[currHandNum], newCard];
 				return newCards;
 			});
 			doubleRef.current = true;
 		}
 	}
-
-	useEffect(() => {
-		if (gamePhase === 'Player' && doubleRef.current === true) {
-			doubleRef.current = false;
-			// console.log("Getting value from double function");
-			if (getHandValue(playerCards[currentHand]) > 21) {
-				setGamePhase('END');
-			}
-			else {
-				playerStand();
-			}
-		}
-	}, [gamePhase, playerCards, currentHand]);
 
 	useEffect(() => {
 		if (dealerFinishedRef.current === true) {
@@ -168,9 +163,36 @@ export default function Page() {
 		}
 	});
 
+	useEffect(() => {
+		if (gamePhase === 'Player' && (doubleRef.current || getHandValue(playerCards[currHandNum]) >= 21)) {
+			doubleRef.current = false;
+			playerStand();
+		}
+	}, [playerCards])
+
 	function playerSplit() {
-		if (gamePhase === 'Player') {
-			;
+		if (gamePhase === 'Player' && playerCards[currHandNum].length === 2 && isPair(playerCards[currHandNum])) {
+			const newCard1 = dealCard();
+			const newCard2 = dealCard();
+			numHandsRef.current += 1;
+			setPlayerCards((currCards) => {
+				let newCards = [...currCards];
+				let newHand = [newCards[currHandNum][1], newCard2];
+				newCards[currHandNum][1] = newCard1;
+				newCards.push(newHand);
+				return newCards;
+			});
+		}
+		else {
+			if (gamePhase !== 'Player') {
+				console.log("Not correct phase");
+			}
+			if (playerCards[currHandNum].length !== 2) {
+				console.log("More than 2 cards");
+			}
+			if (!isPair(playerCards[currHandNum])) {
+				console.log("Not a pair");
+			}
 		}
 	}
 
@@ -178,7 +200,7 @@ export default function Page() {
 		<div id='container' className='bg-[#487860] h-screen'>
 			<Hand currHand={dealerCards} isDealer={true} displayIndicator={false} gamePhase={gamePhase} />
 			<ul className='flex justify-center w-screen'>{playerHands}</ul>
-			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} />
+			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} splitFunc={playerSplit} />
 		</div>
 	);
 }
