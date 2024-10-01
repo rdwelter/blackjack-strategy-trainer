@@ -174,12 +174,13 @@ export default function Page() {
 		if (gamePhase === 'Player' && playerCards[currHandNum].length === 2 && isPair(playerCards[currHandNum])) {
 			const newCard1 = dealCard();
 			const newCard2 = dealCard();
+			const pairCard = playerCards[currHandNum][1];
 			numHandsRef.current += 1;
 			setPlayerCards((currCards) => {
 				let newCards = [...currCards];
-				let newHand = [newCards[currHandNum][1], newCard2];
-				newCards[currHandNum][1] = newCard1;
-				newCards.push(newHand);
+				newCards[currHandNum].pop()
+				newCards[currHandNum].push(newCard1);
+				newCards.push([pairCard, newCard2]);
 				return newCards;
 			});
 		}
