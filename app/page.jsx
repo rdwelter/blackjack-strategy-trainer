@@ -64,6 +64,24 @@ const isPair = (thisHand) => {
 	return false;
 }
 
+const winningHand = (blackjack, dealerHand, playerHand) => {
+	if (blackjack) {
+		return 'player';
+	}
+	const dealerVal = getHandValue(dealerHand);
+	const playerVal = getHandValue(playerHand);
+	if (playerVal > 21) {
+		return 'dealer';
+	}
+	if (dealerVal > 21) {
+		return 'player';
+	}
+	if (playerVal === dealerVal) {
+		return 'push';
+	}
+	return playerVal > dealerVal ? 'player' : 'dealer';
+}
+
 export default function Page() {
 	const shoeRef = useRef(new Shoe(2));
 	const [dealerCards, setDealerCards] = useState([0, 1]);
@@ -76,22 +94,28 @@ export default function Page() {
 	const dealerFinishedRef = useRef(false);
 	const dealerDrawnCardRef = useRef(null);
 
+	let blackjack = false;
+
 	const dealCard = useCallback(() => shoeRef.current.dealCard(), []);
 
 	const playerHands = playerCards.map((currHand, ind) =>
 		<li key={'' + ind} className='flex-1 p-[10px]'>
-			<Hand currHand={currHand} isDealer={false} displayIndicator={gamePhase === 'Player' && currHandNum === ind} gamePhase={gamePhase} />
+			<Hand currHand={currHand} isDealer={false} displayIndicator={gamePhase === 'Player' && currHandNum === ind} gamePhase={gamePhase} winner={gamePhase === 'END' ? winningHand(blackjack, dealerCards, currHand) : ''} />
 		</li>
 	);
 
 	function dealNewHand() {
 		if (gamePhase === 'START' || gamePhase === 'END') {
 			clearInterval(intervalRef.current);
+			blackjack = false;
 			doubleRef.current = false;
 			numHandsRef.current = 1;
 			shoeRef.current.shuffle();
 			const newDealerCards = [dealCard(), dealCard()];
 			const newPlayerCards = [[dealCard(), dealCard()]];
+			if (getHandValue(newPlayerCards[0]) === 21) {
+				blackjack = true;
+			}
 			setCurrHandNum(0);
 			setDealerCards(newDealerCards);
 			setPlayerCards(newPlayerCards);
