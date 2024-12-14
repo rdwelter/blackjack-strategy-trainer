@@ -2,6 +2,7 @@
 
 import Hand from './components/hand';
 import Controls from './components/controls';
+import Betbox from './components/betbox';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Shoe } from './lib/shoe';
 
@@ -88,6 +89,8 @@ export default function Page() {
 	const [playerCards, setPlayerCards] = useState([[2, 3]]);
 	const [gamePhase, setGamePhase] = useState('START');
 	const [currHandNum, setCurrHandNum] = useState(0);
+	const [currBet, setCurrBet] = useState(5);
+	const [bankroll, setBankroll] = useState(1000);
 	const numHandsRef = useRef(1);
 	const intervalRef = useRef();
 	const doubleRef = useRef(false);
@@ -116,6 +119,7 @@ export default function Page() {
 			if (getHandValue(newPlayerCards[0]) === 21) {
 				blackjack = true;
 			}
+			setBankroll(b => b - currBet);
 			setCurrHandNum(0);
 			setDealerCards(newDealerCards);
 			setPlayerCards(newPlayerCards);
@@ -226,6 +230,7 @@ export default function Page() {
 			<Hand currHand={dealerCards} isDealer={true} displayIndicator={false} gamePhase={gamePhase} />
 			<ul className='flex justify-center w-screen'>{playerHands}</ul>
 			<Controls newHandFunc={dealNewHand} hitFunc={playerHit} standFunc={playerStand} doubleFunc={playerDouble} splitFunc={playerSplit} />
+			<Betbox bankroll={bankroll} currBet={currBet} setCurrBet={setCurrBet} />
 		</div>
 	);
 }
